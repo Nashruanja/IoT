@@ -110,8 +110,11 @@ void loop() {
     myservo.write(sudut);  //servo berputar 75 drajat
     delay(15 * 60000);     // Delay selama 15 menit (15 x 60000 milisecond)
   }
+  else {
+    myservo.write(normal);  //servo Kembali
+  }
   //Notifikasi Sumbatan Kanan
-  else if (jarak_kanan_meter > 1) { // jika ultrasonik kanan mendeteksi sumbatan lebih dari 1 M
+  if (jarak_kanan_meter > 1) { // jika ultrasonik kanan mendeteksi sumbatan lebih dari 1 M
     String kanan = "TERDAPAT SUMBATAN PADA SISI KANAN!\n";
     kanan += "Jarak Sumbatan Pada Sisi Kanan : ";
     kanan += int(jarak_kanan_meter);
@@ -127,9 +130,7 @@ void loop() {
     kiri += " M\n";
     myBot.sendMessage(id, kiri, "");
     Serial.println("Mengirim data sensor ke telegram");
-  } else {
-    myservo.write(normal);  //servo Kembali
-  }
+  } 
 
   delay(1000);  // Menunda selama 1 detik
 }
