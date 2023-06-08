@@ -8,13 +8,15 @@ CTBot myBot;
 char ssid[] = "DRAGON";                                            //nama wifi
 char password[] = "qwerty1234";                                    //password wifi
 String token = "6010383923:AAFccCOnS2aAImT4pphBsltxL26zZqEiXQw" ; //token bot telegram
-const int id = 1234219656 ;                                     //idbot
+const int id = 1363753003 ;                                     //idbot
 
 WiFiClientSecure client;
 
+Servo myservo1;
+Servo myservo2;
+
 //motor servo
-Servo myservo;
-int sudut = 75;  //berputar sampai 75 drajat
+int sudut = 85;  //berputar sampai 75 drajat
 int normal = 0;  //berputar kembali
 
 //sensor Air hujan
@@ -28,10 +30,14 @@ const int sensor_hujan = 2;  // Hubungan ke pin D4
 #define echoPin_kiri 14     // Pin yang terhubung ke echo ke D5
 
 void setup() {
-  //motor servo
-  myservo.attach(0);  //Hubungan ke pin D3
+  //motor servo1
+  myservo1.attach(0);  //Hubungan ke pin D3
+  myservo2.attach(4);  //Hubungan ke pin D2
+  // Mengatur posisi awal servo2
+  myservo1.write(normal);
+  myservo2.write(sudut);
   //serial print
-  Serial.begin(9600);
+  Serial.begin(115200);
   //Ultrasonik kanan
   pinMode(triggerPin_kanan, OUTPUT);
   pinMode(echoPin_kanan, INPUT);
@@ -107,30 +113,34 @@ void loop() {
   int air = digitalRead(sensor_hujan);  //Baca sensor
 
   if (air == LOW) {        //jika terdeteksi ada air
-    myservo.write(sudut);  //servo berputar 75 drajat
-    delay(15 * 60000);     // Delay selama 15 menit (15 x 60000 milisecond)
+    myservo1.write(sudut);  //servo berputar 85 drajat
+    //delay(1 * 5000);     // Delay selama 5 detik (1 x 5000 milisecond)
+    myservo2.write(normal);  //servo berputar 85 drajat
+    //delay(1 * 5000);     // Delay selama 5 detik (1 x 5000 milisecond)
   }
-  else {
-    myservo.write(normal);  //servo Kembali
+  //Mengembalikan posisi alat setelah tidak ada air
+  else if (jarak_kanan_meter > 0.25 && myservo1.read() == sudut && myservo2.read() == normal) { // Jika Ultrasonik Kanan mendeteksi jarak lebih dari 25 cm dan servo diatas maka akan kembali ke posisi normal alat
+    myservo1.write(normal);  //servo Kembali
+    myservo2.write(sudut);  //servo kembali
   }
   //Notifikasi Sumbatan Kanan
-  if (jarak_kanan_meter > 1) { // jika ultrasonik kanan mendeteksi sumbatan lebih dari 1 M
+  else if (jarak_kanan_meter <= 1) { // jika ultrasonik kanan mendeteksi sumbatan kurang dari 1 M
     String kanan = "TERDAPAT SUMBATAN PADA SISI KANAN!\n";
     kanan += "Jarak Sumbatan Pada Sisi Kanan : ";
     kanan += int(jarak_kanan_meter);
     kanan += " M\n";
     myBot.sendMessage(id, kanan, "");
-    Serial.println("Mengirim data sensor ke telegram");
+    Serial.println("Mengirim data sensor ke telegram -Ultrasonik Kanan- ");
   }
   //Notifikasi Sumbatan Kiri
-  else if (jarak_kiri_meter > 1 && myservo.read() != sudut) { // jika ultrasonik Kiri mendeteksi sumbatan lebih dari 1 M dan servo tidak disudut
+  else if (jarak_kiri_meter <= 1 && myservo1.read() != sudut && myservo2.read() != normal) { // jika ultrasonik Kiri mendeteksi sumbatan lebih dari 1 M dan servo tidak disudut
     String kiri = "TERDAPAT SUMBATAN PADA SISI KIRI!\n";
     kiri += "Jarak Sumbatan Pada Sisi Kiri : ";
     kiri += int(jarak_kiri_meter);
     kiri += " M\n";
     myBot.sendMessage(id, kiri, "");
-    Serial.println("Mengirim data sensor ke telegram");
-  } 
+    Serial.println("Mengirim data sensor ke telegram -Ultrasonik Kiri-");
+  }
 
   delay(1000);  // Menunda selama 1 detik
 }
